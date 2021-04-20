@@ -227,7 +227,6 @@ class TFT_ILI9163 : public Print {
 
            drawPixel(uint16_t x, uint16_t y, uint16_t color),
            fastPixel(uint8_t x, uint8_t y, uint16_t color),
-           fastPixel2(int16_t x, int16_t y, uint16_t color),
            fastSetup(void),
 
            drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t font),
@@ -315,9 +314,6 @@ class TFT_ILI9163 : public Print {
   boolean  hwSPI;
 
   uint8_t  mySPCR, savedSPCR;
-
-  int8_t   _cs, _dc, _rst, _mosi, _miso, _sclk;
-
 
  protected:
 

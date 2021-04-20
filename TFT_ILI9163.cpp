@@ -18,14 +18,14 @@
 
 #include <avr/pgmspace.h>
 #include <limits.h>
-#include "pins_arduino.h"
-#include "wiring_private.h"
+//#include "pins_arduino.h"
+//#include "wiring_private.h"
 #include <SPI.h>
 
-inline void spiWait17(void) __attribute__((always_inline));
-inline void spiWait15(void) __attribute__((always_inline));
-inline void spiWait14(void) __attribute__((always_inline));
-inline void spiWait12(void) __attribute__((always_inline));
+inline void spiWait17(void) __attribute__((noinline));
+inline void spiWait15(void) __attribute__((noinline));
+inline void spiWait14(void) __attribute__((noinline));
+inline void spiWait12(void) __attribute__((noinline));
 inline void spiWrite16(uint16_t data, int16_t count) __attribute__((always_inline));
 inline void spiWrite16s(uint16_t data) __attribute__((always_inline));
 inline void spiWrite16R(uint16_t data, int16_t count) __attribute__((always_inline));
@@ -36,21 +36,17 @@ inline void spiWrite16R(uint16_t data, int16_t count) __attribute__((always_inli
 ***************************************************************************************/
 TFT_ILI9163::TFT_ILI9163(int16_t w, int16_t h)
 {
-  _cs   = TFT_CS;
-  _dc   = TFT_DC;
-  _rst  = TFT_RST;
-  _mosi  = _sclk = 0;
 
-  if (_rst > 0) {
-    digitalWrite(_rst, LOW);
-    pinMode(_rst, OUTPUT);
-  }
+#if defined(TFT_RST) && TFT_RST > 0
+  FastPin<TFT_RST>::lo();
+  FastPin<TFT_RST>::setOutput();
+#endif
 
   TFT_DC_D;
-  pinMode(_dc, OUTPUT);
+  FastPin<TFT_DC>::setOutput();
 
   TFT_CS_H;
-  pinMode(_cs, OUTPUT);
+  FastPin<TFT_CS>::setOutput();
 
   _width    = w;
   _height   = h;
@@ -102,12 +98,14 @@ TFT_ILI9163::TFT_ILI9163(int16_t w, int16_t h)
 ***************************************************************************************/
 void TFT_ILI9163::spiwrite(uint8_t c)
 {
-  uint8_t backupSPCR = SPCR;
-  SPCR = mySPCR;
+#ifdef SAVE_SPCR
+  backupSPCR();
+#endif
   SPDR = c;
-  asm volatile( "nop\n\t" ::); // Sync SPIF
-  while (!(SPSR & _BV(SPIF)));
-  SPCR = backupSPCR;
+  spiWait17();
+#ifdef SAVE_SPCR
+  restoreSPCR();
+#endif
 }
 
 /***************************************************************************************
@@ -221,14 +219,14 @@ void TFT_ILI9163::init(void)
   spi_end();
 
   // toggle RST low to reset
-  if (_rst > 0) {
-    digitalWrite(_rst, HIGH);
-    delay(5);
-    digitalWrite(_rst, LOW);
-    delay(20);
-    digitalWrite(_rst, HIGH);
-    delay(150);
-  }
+#if defined(TFT_RST) && TFT_RST > 0
+  FastPin<TFT_RST>::hi();
+  delay(5);
+  FastPin<TFT_RST>::lo();
+  delay(20);
+  FastPin<TFT_RST>::hi();
+  delay(150);
+#endif
 
 	// Initialization commands for ILI9163 screens
 	static const uint8_t ILI9163_cmds[] PROGMEM =
@@ -1031,52 +1029,6 @@ void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
 {
   // Faster range checking, possible because x and y are unsigned
   if ((x >= _width) || (y >= _height)) return;
-  spi_begin();
-
-  TFT_CS_L;
-
-if (addr_col != x) {
-  TFT_DC_C;
-  SPDR = ILI9163_CASET;
-  spiWait12();
-  addr_col = x;
-  TFT_DC_D;
-
-  SPDR = 0; spiWait17();
-  SPDR = x; spiWait12();
-}
-
-if (addr_row != y) {
-  TFT_DC_C;
-  SPDR = ILI9163_RASET;
-  spiWait12();
-  addr_row = y;
-  TFT_DC_D;
-
-  SPDR = 0; spiWait17();
-  SPDR = y; spiWait14();
-}
-
-  TFT_DC_C;
-
-  SPDR = ILI9163_RAMWR; spiWait15();
-
-  TFT_DC_D;
-
-  SPDR = color >> 8; spiWait17();
-  SPDR = color; spiWait14();
-
-  TFT_CS_H;
-
-  spi_end();
-}
-
-void TFT_ILI9163::fastPixel2(int16_t x, int16_t y, uint16_t color)
-{
-  // Faster range checking, possible because x and y are unsigned
-  if ((x >= _width) || (y >= _height)) return;
-  if ((x < 0) || (y < 0)) return;
-
   spi_begin();
 
   TFT_CS_L;
@@ -2256,14 +2208,8 @@ inline void spiWrite16R(uint16_t data, int16_t count)
 ***************************************************************************************/
 inline void spiWait17(void)
 {
-  asm volatile
-  (
-    "	rcall	1f    \n" // 7
-    "	rcall	1f    \n" // 14
-    "	rjmp 	2f    \n" // 16
-    "1:	ret   \n" // 
-    "2:	nop	 \n" // 17
-  );
+  // RCALL is 3, RET is 4, 3 + 4 + 10 = 17
+  __builtin_avr_delay_cycles(10);
 }
 
 /***************************************************************************************
@@ -2272,16 +2218,8 @@ inline void spiWait17(void)
 ***************************************************************************************/
 inline void spiWait15(void)
 {
-  asm volatile
-  (
-    "	adiw	r24,0  \n"	// 2
-    "	adiw	r24,0  \n"	// 4
-    "	adiw	r24,0  \n"	// 6
-    "	rcall	1f     \n"	// 13
-    "	rjmp 	2f     \n"	// 15
-    "1:	ret    \n"	//
-    "2:	       \n"	//
-  );
+  // RCALL is 3, RET is 4, 3 + 4 + 8 = 15
+  __builtin_avr_delay_cycles(8);
 }
 
 /***************************************************************************************
@@ -2290,16 +2228,8 @@ inline void spiWait15(void)
 ***************************************************************************************/
 inline void spiWait14(void)
 {
-  asm volatile
-  (
-    "	nop         \n"	// 1
-    "	adiw	r24,0  \n"	// 3
-    "	adiw	r24,0  \n"	// 5
-    "	rcall	1f     \n"	// 12
-    "	rjmp 	2f     \n"	// 14
-    "1:	ret    \n"	//
-    "2:	       \n"	//
-  );
+  // RCALL is 3, RET is 4, 3 + 4 + 7 = 14
+  __builtin_avr_delay_cycles(7);
 }
 
 /***************************************************************************************
@@ -2308,15 +2238,8 @@ inline void spiWait14(void)
 ***************************************************************************************/
 inline void spiWait12(void)
 {
-  asm volatile
-  (
-    "	nop         \n"	// 1
-    "	adiw	r24,0  \n"	// 3
-    "	rcall	1f     \n"	// 10
-    "	rjmp 	2f     \n"	// 12
-    "1:	ret    \n"	//
-    "2:	       \n"	//
-  );
+  // RCALL is 3, RET is 4, 3 + 4 + 5 = 12
+  __builtin_avr_delay_cycles(5);
 }
 
 /***************************************************
