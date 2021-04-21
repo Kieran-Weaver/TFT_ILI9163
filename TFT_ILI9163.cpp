@@ -18,6 +18,7 @@
 
 #include <avr/pgmspace.h>
 #include <limits.h>
+#include <util/delay.h>
 //#include "pins_arduino.h"
 //#include "wiring_private.h"
 #include <SPI.h>
@@ -221,11 +222,11 @@ void TFT_ILI9163::init(void)
   // toggle RST low to reset
 #if defined(TFT_RST) && TFT_RST > 0
   FastPin<TFT_RST>::hi();
-  delay(5);
+  _delay_ms(5);
   FastPin<TFT_RST>::lo();
-  delay(20);
+  _delay_ms(20);
   FastPin<TFT_RST>::hi();
-  delay(150);
+  _delay_ms(150);
 #endif
 
 	// Initialization commands for ILI9163 screens
@@ -282,7 +283,14 @@ void TFT_ILI9163::commandList (const uint8_t *addr)
 		if (ms)
 		{
 			ms = pgm_read_byte(addr++);     // Read post-command delay time (ms)
-			delay( (ms==255 ? 500 : ms) );
+      if (ms == 255) {
+        _delay_ms(500);
+      } else { // Use _delay_ms instead of delay to save flash
+        while (ms) {
+          _delay_ms(1);
+          ms--;
+        }
+      }
 		}
 	}
 	spi_end();
@@ -977,52 +985,7 @@ void TFT_ILI9163::setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 // where either x or y does not change
 void TFT_ILI9163::drawPixel(uint16_t x, uint16_t y, uint16_t color)
 {
-  // Faster range checking, possible because x and y are unsigned
-  if ((x >= _width) || (y >= _height)) return;
-  spi_begin();
-
-  TFT_CS_L;
-
-if (addr_col != x) {
-  TFT_DC_C;
-  SPDR = ILI9163_CASET;
-  spiWait12();
-  addr_col = x;
-  TFT_DC_D;
-  SPDR = 0; spiWait17();
-  SPDR = x; spiWait17();
-
-  SPDR = 0; spiWait17();
-  SPDR = x; spiWait12();
-}
-
-if (addr_row != y) {
-  TFT_DC_C;
-  SPDR = ILI9163_RASET;
-  spiWait12();
-  addr_row = y;
-  TFT_DC_D;
-  SPDR = 0; spiWait17();
-  SPDR = y; spiWait17();
-
-  SPDR = 0; spiWait17();
-  SPDR = y; spiWait14();
-}
-
-  TFT_DC_C;
-
-  SPDR = ILI9163_RAMWR; spiWait15();
-
-  TFT_DC_D;
-
-  SPDR = color >> 8; spiWait15();
-  win_xe=x;
-  SPDR = color; spiWait12();
-  win_ye=y;
-
-  TFT_CS_H;
-
-  spi_end();
+  fastPixel(x, y, color);
 }
 
 void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
@@ -1033,27 +996,27 @@ void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
 
   TFT_CS_L;
 
-if (addr_col != x) {
-  TFT_DC_C;
-  SPDR = ILI9163_CASET;
-  spiWait12();
-  addr_col = x;
-  TFT_DC_D;
+  if (addr_col != x) {
+    TFT_DC_C;
+    SPDR = ILI9163_CASET;
+    spiWait12();
+    addr_col = x;
+    TFT_DC_D;
 
-  SPDR = 0; spiWait17();
-  SPDR = x; spiWait12();
-}
+    SPDR = 0; spiWait17();
+    SPDR = x; spiWait12();
+  }
 
-if (addr_row != y) {
-  TFT_DC_C;
-  SPDR = ILI9163_RASET;
-  spiWait12();
-  addr_row = y;
-  TFT_DC_D;
+  if (addr_row != y) {
+    TFT_DC_C;
+    SPDR = ILI9163_RASET;
+    spiWait12();
+    addr_row = y;
+    TFT_DC_D;
 
-  SPDR = 0; spiWait17();
-  SPDR = y; spiWait14();
-}
+    SPDR = 0; spiWait17();
+    SPDR = y; spiWait14();
+  }
 
   TFT_DC_C;
 
