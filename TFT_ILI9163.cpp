@@ -35,7 +35,7 @@ inline void spiWrite16R(uint16_t data, int16_t count) __attribute__((always_inli
 ** Function name:           TFT_ILI9163
 ** Description:             Constructor , we must use hardware SPI pins
 ***************************************************************************************/
-TFT_ILI9163::TFT_ILI9163(int16_t w, int16_t h)
+TFT_ILI9163::TFT_ILI9163(UINTX w, UINTY h)
 {
 
 #if defined(TFT_RST) && TFT_RST > 0
@@ -300,19 +300,19 @@ void TFT_ILI9163::commandList (const uint8_t *addr)
 ** Function name:           drawCircle
 ** Description:             Draw a circle outline
 ***************************************************************************************/
-void TFT_ILI9163::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
+void TFT_ILI9163::drawCircle(UINTX x0, UINTY y0, int16_t r, uint16_t color)
 {
   int16_t f = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = - r - r;
-  int16_t x = 0;
+  UINTX x = 0;
 
   fastSetup();
 
-  fastPixel(x0 + r, y0  , color);
-  fastPixel(x0 - r, y0  , color);
-  fastPixel(x0  , y0 - r, color);
-  fastPixel(x0  , y0 + r, color);
+  drawPixel(x0 + r, y0  , color);
+  drawPixel(x0 - r, y0  , color);
+  drawPixel(x0  , y0 - r, color);
+  drawPixel(x0  , y0 + r, color);
 
   while (x < r) {
     if (f >= 0) {
@@ -324,15 +324,15 @@ void TFT_ILI9163::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
     ddF_x += 2;
     f += ddF_x;
 
-    fastPixel(x0 + x, y0 + r, color);
-    fastPixel(x0 - x, y0 + r, color);
-    fastPixel(x0 - x, y0 - r, color);
-    fastPixel(x0 + x, y0 - r, color);
+    drawPixel(x0 + x, y0 + r, color);
+    drawPixel(x0 - x, y0 + r, color);
+    drawPixel(x0 - x, y0 - r, color);
+    drawPixel(x0 + x, y0 - r, color);
 
-    fastPixel(x0 + r, y0 + x, color);
-    fastPixel(x0 - r, y0 + x, color);
-    fastPixel(x0 - r, y0 - x, color);
-    fastPixel(x0 + r, y0 - x, color);
+    drawPixel(x0 + r, y0 + x, color);
+    drawPixel(x0 - r, y0 + x, color);
+    drawPixel(x0 - r, y0 - x, color);
+    drawPixel(x0 + r, y0 - x, color);
   }
 }
 
@@ -340,12 +340,12 @@ void TFT_ILI9163::drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 ** Function name:           drawCircleHelper
 ** Description:             Support function for circle drawing
 ***************************************************************************************/
-void TFT_ILI9163::drawCircleHelper( int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color)
+void TFT_ILI9163::drawCircleHelper( UINTX x0, UINTY y0, int16_t r, uint8_t cornername, uint16_t color)
 {
   int16_t f     = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -2 * r;
-  int16_t x     = 0;
+  UINTX x     = 0;
 
   while (x < r) {
     if (f >= 0) {
@@ -380,7 +380,7 @@ void TFT_ILI9163::drawCircleHelper( int16_t x0, int16_t y0, int16_t r, uint8_t c
 ** Function name:           fillCircle
 ** Description:             draw a filled circle
 ***************************************************************************************/
-void TFT_ILI9163::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
+void TFT_ILI9163::fillCircle(UINTX x0, UINTY y0, int16_t r, uint16_t color)
 {
   drawFastVLine(x0, y0 - r, r + r + 1, color);
   fillCircleHelper(x0, y0, r, 3, 0, color);
@@ -391,12 +391,12 @@ void TFT_ILI9163::fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color)
 ** Description:             Support function for filled circle drawing
 ***************************************************************************************/
 // Used to do circles and roundrects
-void TFT_ILI9163::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color)
+void TFT_ILI9163::fillCircleHelper(UINTX x0, UINTY y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color)
 {
   int16_t f     = 1 - r;
   int16_t ddF_x = 1;
   int16_t ddF_y = -r - r;
-  int16_t x     = 0;
+  UINTX x     = 0;
 
   delta++;
   while (x < r) {
@@ -424,11 +424,12 @@ void TFT_ILI9163::fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t co
 ** Function name:           drawEllipse
 ** Description:             Draw a ellipse outline
 ***************************************************************************************/
-void TFT_ILI9163::drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color)
+void TFT_ILI9163::drawEllipse(UINTX x0, UINTY y0, UINTX rx, UINTY ry, uint16_t color)
 {
   if (rx<2) return;
   if (ry<2) return;
-  int16_t x, y;
+  UINTX x;
+  UINTY y;
   int32_t rx2 = rx * rx;
   int32_t ry2 = ry * ry;
   int32_t fx2 = 4 * rx2;
@@ -439,10 +440,10 @@ void TFT_ILI9163::drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, ui
 
   for (x = 0, y = ry, s = 2*ry2+rx2*(1-2*ry); ry2*x <= rx2*y; x++)
   {
-    fastPixel(x0 + x, y0 + y, color);
-    fastPixel(x0 - x, y0 + y, color);
-    fastPixel(x0 - x, y0 - y, color);
-    fastPixel(x0 + x, y0 - y, color);
+    drawPixel(x0 + x, y0 + y, color);
+    drawPixel(x0 - x, y0 + y, color);
+    drawPixel(x0 - x, y0 - y, color);
+    drawPixel(x0 + x, y0 - y, color);
     if (s >= 0)
     {
       s += fx2 * (1 - y);
@@ -453,10 +454,10 @@ void TFT_ILI9163::drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, ui
 
   for (x = rx, y = 0, s = 2*rx2+ry2*(1-2*rx); rx2*y <= ry2*x; y++)
   {
-    fastPixel(x0 + x, y0 + y, color);
-    fastPixel(x0 - x, y0 + y, color);
-    fastPixel(x0 - x, y0 - y, color);
-    fastPixel(x0 + x, y0 - y, color);
+    drawPixel(x0 + x, y0 + y, color);
+    drawPixel(x0 - x, y0 + y, color);
+    drawPixel(x0 - x, y0 - y, color);
+    drawPixel(x0 + x, y0 - y, color);
     if (s >= 0)
     {
       s += fy2 * (1 - x);
@@ -470,11 +471,12 @@ void TFT_ILI9163::drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, ui
 ** Function name:           fillEllipse
 ** Description:             draw a filled ellipse
 ***************************************************************************************/
-void TFT_ILI9163::fillEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color)
+void TFT_ILI9163::fillEllipse(UINTX x0, UINTY y0, UINTX rx, UINTY ry, uint16_t color)
 {
   if (rx<2) return;
   if (ry<2) return;
-  int16_t x, y;
+  UINTX x;
+  UINTY y;
   int32_t rx2 = rx * rx;
   int32_t ry2 = ry * ry;
   int32_t fx2 = 4 * rx2;
@@ -523,7 +525,7 @@ void TFT_ILI9163::fillScreen(uint16_t color)
 ** Description:             Draw a rectangle outline
 ***************************************************************************************/
 // Draw a rectangle
-void TFT_ILI9163::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+void TFT_ILI9163::drawRect(UINTX x, UINTY y, UINTX w, UINTY h, uint16_t color)
 {
   drawFastHLine(x, y, w, color);
   drawFastHLine(x, y + h - 1, w, color);
@@ -536,8 +538,9 @@ void TFT_ILI9163::drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t 
 ** Description:             Draw a rounded corner rectangle outline
 ***************************************************************************************/
 // Draw a rounded rectangle
-void TFT_ILI9163::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color)
+void TFT_ILI9163::drawRoundRect(UINTX x, UINTY y, UINTX w, UINTY h, int16_t r, uint16_t color)
 {
+  fastSetup();
   // smarter version
   drawFastHLine(x + r  , y    , w - r - r, color); // Top
   drawFastHLine(x + r  , y + h - 1, w - r - r, color); // Bottom
@@ -556,7 +559,7 @@ void TFT_ILI9163::drawRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int1
 ** Description:             Draw a rounded corner filled rectangle
 ***************************************************************************************/
 // Fill a rounded rectangle
-void TFT_ILI9163::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int16_t r, uint16_t color)
+void TFT_ILI9163::fillRoundRect(UINTX x, UINTY y, UINTX w, UINTY h, int16_t r, uint16_t color)
 {
   // smarter version
   fillRect(x + r, y, w - r - r, h, color);
@@ -571,7 +574,7 @@ void TFT_ILI9163::fillRoundRect(int16_t x, int16_t y, int16_t w, int16_t h, int1
 ** Description:             Draw a triangle outline using 3 arbitrary points
 ***************************************************************************************/
 // Draw a triangle
-void TFT_ILI9163::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
+void TFT_ILI9163::drawTriangle(UINTX x0, UINTY y0, UINTX x1, UINTY y1, UINTX x2, UINTY y2, uint16_t color)
 {
   drawLine(x0, y0, x1, y1, color);
   drawLine(x1, y1, x2, y2, color);
@@ -583,7 +586,7 @@ void TFT_ILI9163::drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, i
 ** Description:             Draw a filled triangle using 3 arbitrary points
 ***************************************************************************************/
 // Fill a triangle - original Adafruit function works well and code footprint is small
-void TFT_ILI9163::fillTriangle ( int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color)
+void TFT_ILI9163::fillTriangle ( UINTX x0, UINTY y0, UINTX x1, UINTY y1, UINTX x2, UINTY y2, uint16_t color)
 {
   int16_t a, b, y, last;
 
@@ -656,7 +659,7 @@ void TFT_ILI9163::fillTriangle ( int16_t x0, int16_t y0, int16_t x1, int16_t y1,
 ** Function name:           drawBitmap
 ** Description:             Draw an image stored in an array on the TFT
 ***************************************************************************************/
-void TFT_ILI9163::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color)
+void TFT_ILI9163::drawBitmap(UINTX x, UINTY y, const uint8_t *bitmap, UINTX w, UINTY h, uint16_t color)
 {
 
   int16_t i, j, byteWidth = (w + 7) / 8;
@@ -664,7 +667,7 @@ void TFT_ILI9163::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_
   for (j = 0; j < h; j++) {
     for (i = 0; i < w; i++ ) {
       if (pgm_read_byte(bitmap + j * byteWidth + i / 8) & (128 >> (i & 7))) {
-        fastPixel(x + i, y + j, color);
+        drawPixel(x + i, y + j, color);
       }
     }
   }
@@ -674,7 +677,7 @@ void TFT_ILI9163::drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_
 ** Function name:           setCursor
 ** Description:             Set the text cursor x,y position
 ***************************************************************************************/
-void TFT_ILI9163::setCursor(int16_t x, int16_t y)
+void TFT_ILI9163::setCursor(UINTX x, UINTY y)
 {
   cursor_x = x;
   cursor_y = y;
@@ -684,7 +687,7 @@ void TFT_ILI9163::setCursor(int16_t x, int16_t y)
 ** Function name:           setCursor
 ** Description:             Set the text cursor x,y position and font
 ***************************************************************************************/
-void TFT_ILI9163::setCursor(int16_t x, int16_t y, uint8_t font)
+void TFT_ILI9163::setCursor(UINTX x, UINTY y, uint8_t font)
 {
   textfont = font;
   cursor_x = x;
@@ -836,7 +839,7 @@ int16_t TFT_ILI9163::fontHeight(int font)
 ** Function name:           drawChar
 ** Description:             draw a single character in the Adafruit GLCD font
 ***************************************************************************************/
-void TFT_ILI9163::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size)
+void TFT_ILI9163::drawChar(UINTX x, UINTY y, unsigned char c, uint16_t color, uint16_t bg, uint8_t size)
 {
 #ifdef LOAD_GLCD
   if ((x >= _width)            || // Clip right
@@ -847,6 +850,7 @@ void TFT_ILI9163::drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color
   boolean fillbg = (bg != color);
 
 spi_begin();
+  fastSetup();
 
 // This is about 5 times faster for textsize=1 with background (at 200us per character)
   if ((size==1) && fillbg)
@@ -921,7 +925,7 @@ spi_end();
 ***************************************************************************************/
 // Chip select is high at the end of this function
 
-void TFT_ILI9163::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+void TFT_ILI9163::setAddrWindow(UINTX x0, UINTY y0, UINTX x1, UINTY y1)
 {
   spi_begin();
   TFT_CS_L;
@@ -937,7 +941,7 @@ void TFT_ILI9163::setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 ***************************************************************************************/
 // Chip select stays low, use setAddrWindow() from sketches
 
-void TFT_ILI9163::setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
+void TFT_ILI9163::setWindow(UINTX x0, UINTY y0, UINTX x1, UINTY y1)
 {
 
   // Column addr set
@@ -983,12 +987,7 @@ void TFT_ILI9163::setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1)
 ***************************************************************************************/
 // Smarter version that takes advantage of often used orthogonal coordinate plots
 // where either x or y does not change
-void TFT_ILI9163::drawPixel(uint16_t x, uint16_t y, uint16_t color)
-{
-  fastPixel(x, y, color);
-}
-
-void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
+void TFT_ILI9163::drawPixel(UINTX x, UINTY y, uint16_t color)
 {
   // Faster range checking, possible because x and y are unsigned
   if ((x >= _width) || (y >= _height)) return;
@@ -999,22 +998,30 @@ void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
   if (addr_col != x) {
     TFT_DC_C;
     SPDR = ILI9163_CASET;
-    spiWait12();
+    spiWait14();
     addr_col = x;
     TFT_DC_D;
 
+#if SIZEOF_UINTX > 1
+    SPDR = x >> 8; spiWait17();
+#else
     SPDR = 0; spiWait17();
-    SPDR = x; spiWait12();
+#endif
+    SPDR = x; spiWait14();
   }
 
   if (addr_row != y) {
     TFT_DC_C;
     SPDR = ILI9163_RASET;
-    spiWait12();
+    spiWait14();
     addr_row = y;
     TFT_DC_D;
 
+#if SIZEOF_UINTY > 1
+    SPDR = y >> 8; spiWait17();
+#else
     SPDR = 0; spiWait17();
+#endif
     SPDR = y; spiWait14();
   }
 
@@ -1025,7 +1032,7 @@ void TFT_ILI9163::fastPixel(uint8_t x, uint8_t y, uint16_t color)
   TFT_DC_D;
 
   SPDR = color >> 8; spiWait17();
-  SPDR = color; spiWait14();
+  SPDR = color; spiWait17();
 
   TFT_CS_H;
 
@@ -1186,9 +1193,26 @@ void TFT_ILI9163::pushColors(uint8_t *data, uint16_t len)
 // Select which version, fastest or compact
 #ifdef FAST_LINE
 
-void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+void TFT_ILI9163::drawLine(UINTX x0, UINTY y0, UINTX x1, UINTY y1, uint16_t color)
 {
+  if (x0 == x1) {
+    if (y0 < y1) {
+      drawFastVLine(x0, y0, y1-y0, color);
+    } else {
+      drawFastVLine(x0, y1, y0-y1, color);
+    }
+    return;
+  } else if (y0 == y1) {
+    if (x0 < x1) {
+      drawFastHLine(x0, y0, x1-x0, color);
+    } else {
+      drawFastHLine(x1, y0, x0-x1, color);
+    }
+    return;
+  }
+  
   spi_begin();
+  fastSetup();
 
   int8_t steep = abs(y1 - y0) > abs(x1 - x0);
 
@@ -1230,6 +1254,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
            setWindow(y0, x0, y0, _height);
 		for (; x0 <= x1; x0++) {
 			spiWrite16s(color);
+      spiWait12();
 			err -= dy;
 			if (err < 0) {
 				y0 += ystep;
@@ -1258,6 +1283,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
            setWindow(x0, y0, _width, y0);
 		for (; x0 <= x1; x0++) {
 			spiWrite16s(color);
+      spiWait12();
 			err -= dy;
 			if (err < 0) {
 				y0 += ystep;
@@ -1276,7 +1302,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
 
 /*
 // Slower original GFX, but start and end can be off screen
-void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+void TFT_ILI9163::drawLine(UINTX x0, UINTY y0, UINTX x1, UINTY y1, uint16_t color)
 {
   int16_t steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
@@ -1320,7 +1346,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
 */
 
 // Slower but more compact line drawing function
-void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color)
+void TFT_ILI9163::drawLine(UINTX x0, UINTY y0, UINTX x1, UINTY y1, uint16_t color)
 {
   int8_t steep = abs(y1 - y0) > abs(x1 - x0);
   if (steep) {
@@ -1339,6 +1365,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
   int16_t err = dx >> 1, ystep = -1, xs = x0, dlen = 0;
   if (y0 < y1) ystep = 1;
 
+  fastSetup();
   // Split into steep and not steep for FastH/V separation
   if (steep) {
     for (; x0 <= x1; x0++) {
@@ -1375,7 +1402,7 @@ void TFT_ILI9163::drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint1
 ** Function name:           drawFastVLine
 ** Description:             draw a vertical line
 ***************************************************************************************/
-void TFT_ILI9163::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
+void TFT_ILI9163::drawFastVLine(UINTX x, UINTY y, UINTY h, uint16_t color)
 {
 #ifdef CLIP_CHECK
   // Rudimentary clipping
@@ -1398,7 +1425,7 @@ void TFT_ILI9163::drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color)
 ** Function name:           drawFastHLine
 ** Description:             draw a horizontal line
 ***************************************************************************************/
-void TFT_ILI9163::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
+void TFT_ILI9163::drawFastHLine(UINTX x, UINTY y, UINTX w, uint16_t color)
 {
 #ifdef CLIP_CHECK
   // Rudimentary clipping
@@ -1421,7 +1448,7 @@ void TFT_ILI9163::drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color)
 ** Function name:           fillRect
 ** Description:             draw a filled rectangle
 ***************************************************************************************/
-void TFT_ILI9163::fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color)
+void TFT_ILI9163::fillRect(UINTX x, UINTY y, UINTX w, UINTY h, uint16_t color)
 {
 #ifdef CLIP_CHECK
   // rudimentary clipping (drawChar w/big text requires this)
@@ -1584,7 +1611,7 @@ size_t TFT_ILI9163::write(uint8_t uniCode)
 ** Function name:           drawChar
 ** Description:             draw a unicode onto the screen
 ***************************************************************************************/
-int TFT_ILI9163::drawChar(unsigned int uniCode, int x, int y, int font)
+int TFT_ILI9163::drawChar(unsigned int uniCode, UINTX x, UINTY y, int font)
 {
 
   if (font==1)
@@ -1829,7 +1856,7 @@ int TFT_ILI9163::drawChar(unsigned int uniCode, int x, int y, int font)
 ** Function name:           drawString
 ** Description :            draw string with padding if it is defined
 ***************************************************************************************/
-int TFT_ILI9163::drawString(char *string, int poX, int poY, int font)
+int TFT_ILI9163::drawString(char *string, UINTX poX, UINTY poY, int font)
 {
   int16_t sumX = 0;
   uint8_t padding = 1;
@@ -1945,7 +1972,7 @@ return sumX;
 ** Function name:           drawCentreString
 ** Descriptions:            draw string centred on dX
 ***************************************************************************************/
-int TFT_ILI9163::drawCentreString(char *string, int dX, int poY, int font)
+int TFT_ILI9163::drawCentreString(char *string, UINTX dX, UINTY poY, int font)
 {
   byte tempdatum = textdatum;
   int sumX = 0;
@@ -1959,7 +1986,7 @@ int TFT_ILI9163::drawCentreString(char *string, int dX, int poY, int font)
 ** Function name:           drawRightString
 ** Descriptions:            draw string right justified to dX
 ***************************************************************************************/
-int TFT_ILI9163::drawRightString(char *string, int dX, int poY, int font)
+int TFT_ILI9163::drawRightString(char *string, UINTX dX, UINTY poY, int font)
 {
   byte tempdatum = textdatum;
   int sumX = 0;
@@ -1973,7 +2000,7 @@ int TFT_ILI9163::drawRightString(char *string, int dX, int poY, int font)
 ** Function name:           drawNumber
 ** Description:             draw a long integer
 ***************************************************************************************/
-int TFT_ILI9163::drawNumber(long long_num, int poX, int poY, int font)
+int TFT_ILI9163::drawNumber(long long_num, UINTX poX, UINTY poY, int font)
 {
   char str[12];
   ltoa(long_num, str, 10);
@@ -1986,7 +2013,7 @@ int TFT_ILI9163::drawNumber(long long_num, int poX, int poY, int font)
 ***************************************************************************************/
 // Adapted to assemble and print a string, this permits alignment relative to a datum
 // looks complicated but much more compact and actually faster than using print class
-int TFT_ILI9163::drawFloat(float floatNumber, int dp, int poX, int poY, int font)
+int TFT_ILI9163::drawFloat(float floatNumber, int dp, UINTX poX, UINTY poY, int font)
 {
   char str[14];               // Array to contain decimal string
   uint8_t ptr = 0;            // Initialise pointer for array
@@ -2057,39 +2084,12 @@ inline void spiWrite16(uint16_t data, int16_t count)
 {
 // We can enter this loop with 0 pixels to draw, so we need to check this
 // if(count<1) { Serial.print("#### Less than 1 ####"); Serial.println(count);}
-
-  uint8_t temp;
-  asm volatile
-  (
-    "	sbiw	%[count],0\n"			// test count
-    //"	brmi	2f\n"					// if < 0 then done
-    "	breq	2f\n"					// if == 0 then done
-
-    "1:	out	%[spi],%[hi]\n"		// write SPI data
-    "	rcall	3f      \n" // 7
-    "	rcall	3f      \n" // 14
-    "	rjmp 	4f      \n" // 16
-    "3:	ret     \n" // 
-    "4:	nop     \n" // 17
-
-    "	out	%[spi],%[lo]\n"			// write SPI data
-
-    "	adiw	r24,0	  \n"	// 2
-    "	adiw	r24,0  \n"	// 4
-    "	rcall	5f     \n"	// 11
-    "	rjmp 	6f     \n"	// 13
-    "5:	ret    \n"	// 
-    "6:	       \n"
-
-    "	sbiw	%[count],1 \n" // 15 decrement count
-    "	brne	1b         \n" // 17 if != 0 then loop
-
-    "2:\n"
-
-    : [temp] "=d" (temp), [count] "+w" (count)
-    : [spi] "i" (_SFR_IO_ADDR(SPDR)), [lo] "r" ((uint8_t)data), [hi] "r" ((uint8_t)(data>>8))
-    :
-  );
+  while (count--) {
+    SPDR = (uint8_t)(data >> 8);
+    spiWait17();
+    SPDR = (uint8_t)(data);
+    spiWait15();
+  }
 }
 
 /***************************************************************************************
@@ -2098,26 +2098,9 @@ inline void spiWrite16(uint16_t data, int16_t count)
 ***************************************************************************************/
 inline void spiWrite16s(uint16_t data)
 {
-  uint8_t temp;
-  asm volatile
-  (
-    "out	%[spi],%[hi]\n"		// write SPI data
-    "	rcall	3f      \n" // 7
-    "	rcall	3f      \n" // 14
-    "	rjmp 	4f      \n" // 16
-    "3:	ret     \n" // 
-    "4:	nop     \n" // 17
-
-    "	out	%[spi],%[lo]\n"			// write SPI data
-    "	nop         \n"	// 1
-    " adiw  r24,0	  \n"	// 3
-    " adiw  r24,0      \n"	// 5
-
-    "5:\n"
-    : [temp] "=d" (temp)
-    : [spi] "i" (_SFR_IO_ADDR(SPDR)), [lo] "r" ((uint8_t)data), [hi] "r" ((uint8_t)(data>>8))
-    :
-  );
+  SPDR = (uint8_t)(data >> 8);
+  spiWait17();
+  SPDR = (uint8_t)data;
 }
 
 
@@ -2130,39 +2113,12 @@ inline void spiWrite16R(uint16_t data, int16_t count)
 // We can enter this loop with 0 pixels to draw, so we need to check this
 // if(count<1) { Serial.print("#### Less than 1 ####"); Serial.println(count);}
 
-  uint8_t temp;
-  asm volatile
-  (
-    "sbiw %[count],0   \n"	// test count
-    //"brmi 2f         \n"	// if < 0 then done, we use unsigned though
-    " breq	2f          \n" // if == 0 then done
-
-    "1:	out	%[spi],%[hi]\n"		// write SPI data
-
-    " rcall	3f     \n" // 7
-    " rcall	3f     \n" // 14
-    " rjmp 	4f     \n" // 16
-    "3:	ret         \n"	// 
-    "4:	nop         \n"	// 17
-
-    " out	%[spi],%[lo]\n"			// write SPI data
-
-    " adiw  r24,0	  \n"	// 2
-    " adiw  r24,0      \n"	// 4
-    " rcall 5f         \n"	// 11
-    " rjmp  6f         \n"	// 13
-    "5:  ret           \n"	// 
-    "6:                \n"
-
-    "	sbiw	%[count],1  \n" // 15 decrement count
-    "	brne	1b          \n"	// 17 if != 0 then loop
-
-    "2:\n"
-
-    : [temp] "=d" (temp), [count] "+w" (count)
-    : [spi] "i" (_SFR_IO_ADDR(SPDR)), [lo] "r" ((uint8_t)(data>>8)), [hi] "r" ((uint8_t)data)
-    :
-  );
+  while (count--) {
+    SPDR = (uint8_t)(data);
+    spiWait17();
+    SPDR = (uint8_t)(data >> 8);
+    spiWait15();
+  }
 }
 
 /***************************************************************************************

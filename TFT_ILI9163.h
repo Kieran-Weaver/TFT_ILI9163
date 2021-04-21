@@ -101,6 +101,22 @@ tftswap(T& a, T& b) { T t = a; a = b; b = t; }
 #define ILI9163_TFTWIDTH  128
 #define ILI9163_TFTHEIGHT 160
 
+#if ILI9163_TFTWIDTH > 255
+typedef uint16_t UINTX;
+#define SIZEOF_UINTX 2
+#else
+typedef uint8_t UINTX;
+#define SIZEOF_UINTX 1
+#endif
+
+#if ILI9163_TFTHEIGHT > 255
+typedef uint16_t UINTY;
+#define SIZEOF_UINTY 2
+#else
+typedef uint8_t UINTY;
+#define SIZEOF_UINTX 1
+#endif
+
 // These are the ILI9163 control registers
 
 #define ILI9163_INVOFF  0x20
@@ -221,16 +237,15 @@ class TFT_ILI9163 : public Print {
 
  public:
 
-  TFT_ILI9163(int16_t _W = ILI9163_TFTWIDTH, int16_t _H = ILI9163_TFTHEIGHT);
+  TFT_ILI9163(UINTX _W = ILI9163_TFTWIDTH, UINTY _H = ILI9163_TFTHEIGHT);
 
   void     init(void), begin(void), // Same - begin included for backwards compatibility
 
-           drawPixel(uint16_t x, uint16_t y, uint16_t color),
-           fastPixel(uint8_t x, uint8_t y, uint16_t color),
+           drawPixel(UINTX x, UINTY y, uint16_t color),
            fastSetup(void),
 
-           drawChar(int16_t x, int16_t y, unsigned char c, uint16_t color, uint16_t bg, uint8_t font),
-           setAddrWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1),
+           drawChar(UINTX x, UINTY y, unsigned char c, uint16_t color, uint16_t bg, uint8_t font),
+           setAddrWindow(UINTX x0, UINTY y0, UINTX x1, UINTY y1),
 
            pushColor(uint16_t color),
            pushColor(uint16_t color, uint16_t len),
@@ -244,33 +259,33 @@ class TFT_ILI9163 : public Print {
            backupSPCR(void),
            restoreSPCR(void),
 
-           drawLine(int16_t x0, int16_t y0, int16_t x1, int16_t y1, uint16_t color),
-           drawFastVLine(int16_t x, int16_t y, int16_t h, uint16_t color),
-           drawFastHLine(int16_t x, int16_t y, int16_t w, uint16_t color),
+           drawLine(UINTX x0, UINTY y0, UINTX x1, UINTY y1, uint16_t color),
+           drawFastVLine(UINTX x, UINTY y, UINTY h, uint16_t color),
+           drawFastHLine(UINTX x, UINTY y, UINTX w, uint16_t color),
 
-           drawRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
-           fillRect(int16_t x, int16_t y, int16_t w, int16_t h, uint16_t color),
-           drawRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color),
-           fillRoundRect(int16_t x0, int16_t y0, int16_t w, int16_t h, int16_t radius, uint16_t color),
+           drawRect(UINTX x, UINTY y, UINTX w, UINTY h, uint16_t color),
+           fillRect(UINTX x, UINTY y, UINTX w, UINTY h, uint16_t color),
+           drawRoundRect(UINTX x0, UINTY y0, UINTX w, UINTY h, int16_t radius, uint16_t color),
+           fillRoundRect(UINTX x0, UINTY y0, UINTX w, UINTY h, int16_t radius, uint16_t color),
 
            setRotation(uint8_t r),
            invertDisplay(boolean i),
 
-           drawCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
-           drawCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, uint16_t color),
-           fillCircle(int16_t x0, int16_t y0, int16_t r, uint16_t color),
-           fillCircleHelper(int16_t x0, int16_t y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color),
+           drawCircle(UINTX x0, UINTY y0, int16_t r, uint16_t color),
+           drawCircleHelper(UINTX x0, UINTY y0, int16_t r, uint8_t cornername, uint16_t color),
+           fillCircle(UINTX x0, UINTY y0, int16_t r, uint16_t color),
+           fillCircleHelper(UINTX x0, UINTY y0, int16_t r, uint8_t cornername, int16_t delta, uint16_t color),
 
-           drawEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color),
-           fillEllipse(int16_t x0, int16_t y0, int16_t rx, int16_t ry, uint16_t color),
+           drawEllipse(UINTX x0, UINTY y0, UINTX rx, UINTY ry, uint16_t color),
+           fillEllipse(UINTX x0, UINTY y0, UINTX rx, UINTY ry, uint16_t color),
 
-           drawTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color),
-           fillTriangle(int16_t x0, int16_t y0, int16_t x1, int16_t y1, int16_t x2, int16_t y2, uint16_t color),
+           drawTriangle(UINTX x0, UINTY y0, UINTX x1, UINTY y1, UINTX x2, UINTY y2, uint16_t color),
+           fillTriangle(UINTX x0, UINTY y0, UINTX x1, UINTY y1, UINTX x2, UINTY y2, uint16_t color),
 
-           drawBitmap(int16_t x, int16_t y, const uint8_t *bitmap, int16_t w, int16_t h, uint16_t color),
+           drawBitmap(UINTX x, UINTY y, const uint8_t *bitmap, UINTX w, UINTY h, uint16_t color),
 
-           setCursor(int16_t x, int16_t y),
-           setCursor(int16_t x, int16_t y, uint8_t font),
+           setCursor(UINTX x, UINTY y),
+           setCursor(UINTX x, UINTY y, uint8_t font),
            setTextColor(uint16_t color),
            setTextColor(uint16_t fgcolor, uint16_t bgcolor),
            setTextSize(uint8_t size),
@@ -289,20 +304,20 @@ class TFT_ILI9163 : public Print {
   uint16_t fontsLoaded(void),
            color565(uint8_t r, uint8_t g, uint8_t b);
 
-  int16_t  drawChar(unsigned int uniCode, int x, int y, int font),
-           drawNumber(long long_num,int poX, int poY, int font),
-           drawFloat(float floatNumber,int decimal,int poX, int poY, int font),
+  int16_t  drawChar(unsigned int uniCode, UINTX x, UINTY y, int font),
+           drawNumber(long long_num, UINTX poX, UINTY poY, int font),
+           drawFloat(float floatNumber,int decimal, UINTX poX, UINTY poY, int font),
 
-           drawString(char *string, int poX, int poY, int font),
-           drawCentreString(char *string, int dX, int poY, int font),
-           drawRightString(char *string, int dX, int poY, int font),
+           drawString(char *string, UINTX poX, UINTY poY, int font),
+           drawCentreString(char *string, UINTX dX, UINTY poY, int font),
+           drawRightString(char *string, UINTX dX, UINTY poY, int font),
 
            height(void),
            width(void),
            textWidth(char *string, int font),
            fontHeight(int font);
 
-    void   setWindow(int16_t x0, int16_t y0, int16_t x1, int16_t y1);
+    void   setWindow(UINTX x0, UINTY y0, UINTX x1, UINTY y1);
 
  virtual  size_t write(uint8_t);
 
@@ -322,7 +337,8 @@ class TFT_ILI9163 : public Print {
 
   uint16_t textcolor, textbgcolor, fontsloaded;
 
-  uint8_t  addr_row, addr_col, win_xe, win_ye;
+  UINTX    addr_row, win_xe;
+  UINTY    addr_col, win_ye;
 
   uint8_t  textfont,
            textsize,
